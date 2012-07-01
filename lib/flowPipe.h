@@ -8,6 +8,7 @@ public:
 	~flowPipeContainer();
 	void insertPrimitiveData(void *in_data, int num_bytes);
 	void consumePrimitiveData(int num_bytes);
+	int getPrimitiveUsage();
 	bool getComplete();
 	void setComplete();
 	void setMappedData(std::string in_key, void *in_value);
@@ -36,5 +37,7 @@ public:
 	flowPipeContainer *getDefaultContainer();
 	flowPipeContainer *makeNewContainer(std::string container_type);
 	flowPipeContainer *getTopContainer();
+	void removeCompleteContainers();
 private:
+	list<flowPipeContainer> containers;
 };

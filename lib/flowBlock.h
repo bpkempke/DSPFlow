@@ -15,7 +15,11 @@ class flowBlock{
 public:
 	flowBlock(flowBlockDescription in_description);
 	virtual void process() =0;
-	virtual void background_thread(){};
+	virtual void process_message(std::string in_message){};//TODO: we may want to make messages a class or struct...
+	void addOutputPipe(flowPipe* out_pipe);
+	void addInputPipe(flowPipe* in_pipe);
+	std::string getId();
 private:
+	virtual void background_thread(){};
 	flowBlcokDescription block_info;
 };
