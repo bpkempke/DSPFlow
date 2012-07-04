@@ -11,6 +11,9 @@ static void *flowGraphThreadProxy(void *in_flowgraph){
 }
 
 flowGraph::flowGraph(std::string graph_desc_xml){
+	//Initialize the block library
+	block_library = new naclDL();
+
 	//First parse the flow graph
 	XMLDocument xml_parser;
 	xml_parser.Parse(graph_desc_xml.c_str());
@@ -47,6 +50,7 @@ flowGraph::flowGraph(std::string graph_desc_xml){
 
 void flowGraph::addBlock(flowBlockDescription in_desc){
 	//create the new block and add it onto the list...
+	//TODO: This needs to use the naclDL object instead of this funniness
 	flowBlock *new_block = new flowBlock(in_desc);
 	flowgraph_indices[in_desc.id] = flowgraph_blocks.length();
 	flowgraph_blocks.push_back(new_block);
@@ -102,13 +106,19 @@ void flowGraph::sendMessage(std::string id, std::string message){
 
 void flowGraph::run(){
 	//TODO: What should this do?
+	int ret = pthread_create( &fg_thread, NULL, flowGraphThreadProxy, (void*) this);
+	running = true;
 }
 
-void flowGraph::pause(){
-	//TODO: What should this do?
+void flowGraph::stop(){
+	running = false;
+	pthread_join(fg_thread, NULL);
 }
 
+//This method performs all of the actual scheduling of computation, etc.
 void flowGraph::thread_run(){
+	while(running){
 
+	}
 }
 
