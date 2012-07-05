@@ -5,8 +5,9 @@
 #define DEFAULT_INITIAL_SIZE 65536
 //flowPipeContainer constructor
 //TODO: probably need a way of not allocating if we don't want a primitive container?
-flowPipeContainer(std::string container_type){
+flowPipe::flowPipe(std::string primitive_type){
 	int initial_size = DEFAULT_INITIAL_SIZE;
+	this->primitive_type = primitive_type;
 
 	//Initialize dynamic data structures
 	// Use native system size so that we don't end up with a bunch of unaligned accesses
@@ -15,11 +16,11 @@ flowPipeContainer(std::string container_type){
 	//Other variable initializations
 	primitive_current_usage = 0;
 	primitive_max_capacity = intial_size;
-	complete_flag = false;
+	top_graph_notified = false;
 }
 
 //Push data into the pipe!
-void flowPipeContainer::insertPrimitiveData(void *in_data, int num_bytes){
+void flowPipe::insertPrimitiveData(void *in_data, int num_bytes){
 	//Check to see if there's too much data in here
 	if(primitive_current_usage + num_bytes > primitive_max_capacity){
 		delete primitive_data;
@@ -30,10 +31,14 @@ void flowPipeContainer::insertPrimitiveData(void *in_data, int num_bytes){
 	//Copy in the data
 	memcpy(primitive_data+primitive_current_usage,in_data,num_bytes);
 	primitive_current_usage += num_bytes;
+
+	//Notify top graph if necessary
+	if(!top_graph_notified)
+		notifyTopGraph();
 }
 
 //Get a pointer to the tail of the queue
-void *flowPipeContainer::consumePrimitiveData(int num_bytes){
+void *flowPipe::consumePrimitiveData(int num_bytes){
 	void *return_pointer = primitive_data;
 	
 	primitive_current_usage -= num_bytes;
@@ -43,61 +48,66 @@ void *flowPipeContainer::consumePrimitiveData(int num_bytes){
 }
 
 //Get the number of used bytes in the pipe
-int flowPipeContainer::getPrimitiveUsage(){
+int flowPipe::getPrimitiveUsage(){
 	return primitive_current_usage;
 }
 
-//Set and/or get the complete flag
-bool flowPipeContainer::getComplete(){
-	return complete_flag;
-}
-
-bool flowPipeContainer::setComplete(){
-	complete_flag = true;
-}
-
 //Accessor methods for the map
-void setMappedData(std::string in_key, void *in_value){
-	data_map[in_key] = in_value;
+void flowPipe::insertKeyValue(std::string in_key, flowPipeObject *in_value){
+	mapped_objects[in_key] = in_value;
+
+	//Notify top graph if necessary
+	if(!top_graph_notified)
+		notifyTopGraph();
 }
 
-void *getMappedData(std::string in_key){
-	return data_map[in_key];
+flowPipeObject *flowPipe::consumeKeyValue(std::string in_key){
+	flowPipeObject *ret = mapped_objects[in_key];
+	mapped_objects.erase(in_key);
+	return ret;
 }
 
-/*************************************
-  * flowPipe
-  ************************************/
-flowPipe::flowPipe(bool make_default_container, std::string default_type){
-	if(make_default_container){
-		//TODO: is there a way to do this in just one line?!
-		flowPipeContainer new_container(default_type);
-		containers.push_front(new_container);
-	}
+std::string getNextKey(){
+	map<std::string, flowPipeObject*>::iterator it;
+	it = mapped_objects.begin();
+	return (*it).first;
 }
 
-flowPipeContainer *flowPipe::getDefaultContainer(){
-	//For now, just assume that there's only a default container if this method is being called
-	//TODO: maybe this isn't a correct assumption?
-	return containers.back();
+//Accessor method for the object pipe
+void flowPipe::insertPipeOjbect(flowPipeObject *in_object){
+	pipe_objects.push_back(in_object);
+
+	//Notify top graph if necessary
+	if(!top_graph_notified)
+		notifyTopGraph();
 }
 
-flowPipeContainer *flowPipe::makeNewContainer(std::string container_type){
-	flowPipeContainer new_container(container_type);
-	containers.push_front(new_container);
-	return containers.front();
+flowPipeObject *flowPipe::consumePipeObject(){
+	flowPipeObject *ret = pipe_objects[pipe_objects.size()-1];
+	pipe_objects.pop_back();
+	return ret;
 }
 
-flowPipeContainer *flowPipe::getTopContainer(){
-	return containers.back();
+int flowPipe::getObjectUsage(){
+	return pipe_objects.size();
 }
 
-void flowPipe::removeCompleteContainers(){
-	list<flowPipeContainer>::iterator cont_it;
-	for(cont_it = containers.begin(); cont_it != containers.end(); cont_it++){
-		if(cont_it.getComplete()){
-			containers.erase(cont_it);
-			cont_it--;
-		}
-	}
+void flowPipe::setInputBlock(flowBlock *in_block){
+	this->in_block = in_block;
+}
+
+void flowPipe::setOutputBlock(flowBlock *out_block){
+	this->out_block = out_block;
+}
+
+void flowPipe::setTopGraph(flowGraph *in_graph){
+	top_graph = in_graph;
+}
+
+void flowPipe::resetTopGraphNotification(){
+	top_graph_notified = false;
+}
+
+void flowPipe::notifyTopGraph(){
+	top_graph->pipeHasData(this);	
 }

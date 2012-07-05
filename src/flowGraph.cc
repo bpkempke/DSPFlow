@@ -20,6 +20,7 @@ flowGraph::flowGraph(std::string graph_desc_xml){
 
 	//This text must already have gotten rid of the <flowgraph> tags, so we're left with parsing individual blocks
 	XMLElement *block_element;
+	std::map<std::string, flowPipe*> pipes;
 	for(block_element = xml_parser.FirstChildElement("block"); block_element != NULL; block_element = block_element->NextSiblingElement("block")){
 		flowBlockDescription newblock_description;
 
@@ -27,19 +28,39 @@ flowGraph::flowGraph(std::string graph_desc_xml){
 		newblock_description.id = id_element->ToText();
 		XMLElement *function_element = block_element->FirstChildElement("function");
 		newblock_description.function = function_element->ToText();
+
+		//Create a new flowBlock element
+		flowBlock *new_block = addBlock(newblock_description);
+		
 		XMLElement *input_element;
 		for(input_element = block_element->FirstChildElement("input"); input_element != NULL; input_element = input_element->NextChildElement("input")){
-			//TODO: How do we know if we want this to use primitives
-			flowPipe *new_pipe = new flowPipe(false);
-			//TODO: need to connect this pipe up!
+			//TODO: Does ToText() do what we want it to do here?
+			flowPipe *from_pipe = pipes[input_element->ToText()];
+			from_pipe->setOutputBlock(new_block);
 		}
 		XMLElement *output_element;
 		for(output_element = block_element->FirstChildElement("output"); output_element != NULL; output_element = output_element->NextChildElement("output")){
-			//TODO: figure out what to do here!
+			//We need to first determine if this is a complex pipe, or just a plain primitive pipe
+			XMLElement *type_element = output_element->FirstChildElement("primitive_type");
+
+			//Create a new pipe, the other end of which will be determined at a later time
+			flowPipe *new_pipe;
+			if(type_element != NULL){
+				new_pipe = new flowPipe(true, type_element->ToText());
+			} else {
+				new_pipe = new flowPipe(false);
+			}
+			new_pipe.setInputBlock(new_block);
+
+			//Add it to the map so that when it's later referenced, we know what pipe we're talking about!
+			//TODO: does ToText() do what we want it to do here?
+			pipes[output_element->ToText()] = new_pipe;
+
+			//Also add it to the vector of pipes so that we can keep track of it for destruction
+			flowgraph_pipes.push_back(new_pipe);
+
 		}
 
-		//Create a new flowBlock element
-		addBlock(newblock_description);
 	}
 
 	//Create the main thread to run this flowgraph
@@ -48,12 +69,17 @@ flowGraph::flowGraph(std::string graph_desc_xml){
 	pthread_detach(new_flowgraph_thread);
 }
 
-void flowGraph::addBlock(flowBlockDescription in_desc){
+flowBlock *flowGraph::addBlock(flowBlockDescription in_desc){
 	//create the new block and add it onto the list...
 	//TODO: This needs to use the naclDL object instead of this funniness
 	flowBlock *new_block = new flowBlock(in_desc);
 	flowgraph_indices[in_desc.id] = flowgraph_blocks.length();
 	flowgraph_blocks.push_back(new_block);
+
+	//Add it to the ready list so that it'll run at some point
+	ready_blocks.push_back(new_block);
+
+	return new_block;
 }
 
 void flowGraph::addPipe(flowBlock *source_block, bool is_primitive){
@@ -104,6 +130,11 @@ void flowGraph::sendMessage(std::string id, std::string message){
 	flowgraph_blocks[block_index]->process_message(message);
 }
 
+void flowGraph::pipeHasData(flowPipe *in_pipe){
+	//Put the pointer on the list of pipes that have had data inserted into them
+	ready_pipes.push_back(in_pipe);
+}
+
 void flowGraph::run(){
 	//TODO: What should this do?
 	int ret = pthread_create( &fg_thread, NULL, flowGraphThreadProxy, (void*) this);
@@ -118,7 +149,21 @@ void flowGraph::stop(){
 //This method performs all of the actual scheduling of computation, etc.
 void flowGraph::thread_run(){
 	while(running){
+		//Start by running all of the blocks which are ready to go
+		while(ready_blocks.size()){
+			flowBlock *cur_ready_block = ready_blocks.pop_back();
+			cur_ready_block->process();
+		}
 
+		//Then there may be data in pipes, so call all the blocks which may have been enabled by the pipe's sudden data inflow
+		//TODO: Maybe process() shouldn't be called in some cases because it'll just waste time?!
+		while(ready_pipes.size()){
+			flowPipe *cur_ready_pipe = ready_pipes.pop_back();
+			flowBlock *enabled_block = cur_ready_pipe->getOutputBlock();
+			enabled_block->process();
+		}
+
+		//TODO: Maybe we should sleep here sometimes???
 	}
 }
 

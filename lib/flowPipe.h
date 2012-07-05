@@ -2,29 +2,12 @@
 
 //Data flows through pipes using classes derived from this
 // flowPipeData class
-class flowPipeContainer {
+class flowPipeObject {
 public:
-	flowPipeContainer(std::string container_type);
-	~flowPipeContainer();
-	void insertPrimitiveData(void *in_data, int num_bytes);
-	void consumePrimitiveData(int num_bytes);
-	int getPrimitiveUsage();
-	bool getComplete();
-	void setComplete();
-	void setMappedData(std::string in_key, void *in_value);
-	void *getMappedData(std::string in_key);
-
+	virtual std::vector<char> getObjectByteRepresentation()=0;
+	virtual void parseObjectByteRepresentation(std::vector<char> in_vector)=0;
 private:
-	bool complete_flag;
 
-	//Container type and key-value mapping
-	std::string container_type;
-	map<std::string,void*> data_map;
-	
-	//Things to use if we are transporting primitive data
-	char *primitive_data;
-	int primitive_current_usage;
-	int primitive_max_capacity;
 }
 
 //This class implements a generic resizable container which 
@@ -33,11 +16,49 @@ private:
 // there's only a finite amount of memory...)
 class flowPipe {
 public:
-	flowPipe(bool make_default_container, std::string default_type="");
-	flowPipeContainer *getDefaultContainer();
-	flowPipeContainer *makeNewContainer(std::string container_type);
-	flowPipeContainer *getTopContainer();
-	void removeCompleteContainers();
+	flowPipe(std::string primitive_type="");
+
+	//TODO: possibly include some locking functionality in here?
+
+	//Primitive data accessor methods
+	void insertPrimitiveData(void *in_data, int num_bytes);
+	void *consumePrimitiveData(int num_bytes);
+	int getPrimitiveUsage();
+
+	//Object data accessor methods
+	void insertPipeObject(flowPipeObject *in_object);
+	flowPipeObject *getPipeObject();
+	int getObjectUsage();
+
+	//Map data accessor methods
+	void insertKeyValue(std::string in_key, flowPipeObject *in_value);
+	flowPipeObject *consumeKeyValue(std::string in_key);
+	std::string getNextKey();
+
+	//Handles to the blocks which own the pipe
+	void setInputBlock(flowBlock *in_block);
+	void setOutputBlock(flowBlcok *out_block);
+	flowBlock *getInputBlock(){return in_block};
+	flowBlock *getOutputBlock(){return out_block};
+
+	//Just to make sure the top flowGraph knows when 
+	void setTopGraph(flowGraph *in_graph);
+	void resetTopGraphNotification();
 private:
-	list<flowPipeContainer> containers;
+	void notifyTopGraph();
+	flowBlock *in_block;
+	flowBlock *out_block;
+
+	//Stuff for upcalls to the top flowGraph object
+	flowGraph *top_graph;
+	bool top_graph_notified;
+
+	//Things to use for transporting data and/or objects
+	char *primitive_data;
+	std::string primitive_type;
+	int primitive_current_usage;
+	int primitive_max_capacity;
+
+	std::vector<flowPipeObject*> pipe_objects;
+	std::map<std::string, flowPipeObject*> mapped_objects;
 };

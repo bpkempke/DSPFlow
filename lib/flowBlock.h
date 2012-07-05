@@ -2,6 +2,7 @@
 #include <vector>
 #include <flowPipe.h>
 
+//TODO: Figure out where/how flowGraph::pipeHasData() is called
 struct flowBlockDescription{
 	std::string id;
 	std::string function;
@@ -21,5 +22,8 @@ public:
 	std::string getId();
 private:
 	virtual void background_thread(){};
+	void producePrimitiveData(flowPipe *in_pipe, void *data, int num_bytes);
+	void producePipeObject(flowPipe *in_pipe, flowPipeObject *in_object);
+	void producetKeyValue(flowPipe *in_pipe, std::string in_key, flowPipeObject *in_value);
 	flowBlcokDescription block_info;
 };
