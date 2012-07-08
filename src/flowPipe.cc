@@ -1,3 +1,6 @@
+#include <flowPipe.h>
+#include <string.h>
+#include <flowGraph.h>
 
 /*************************************
   * flowPipeContainer
@@ -15,7 +18,7 @@ flowPipe::flowPipe(primType primitive_type){
 
 	//Other variable initializations
 	primitive_current_usage = 0;
-	primitive_max_capacity = intial_size;
+	primitive_max_capacity = initial_size;
 	top_graph_notified = false;
 }
 
@@ -67,14 +70,14 @@ flowPipeObject *flowPipe::consumeKeyValue(std::string in_key){
 	return ret;
 }
 
-std::string getNextKey(){
-	map<std::string, flowPipeObject*>::iterator it;
+std::string flowPipe::getNextKey(){
+	std::map<std::string, flowPipeObject*>::iterator it;
 	it = mapped_objects.begin();
 	return (*it).first;
 }
 
 //Accessor method for the object pipe
-void flowPipe::insertPipeOjbect(flowPipeObject *in_object){
+void flowPipe::insertPipeObject(flowPipeObject *in_object){
 	pipe_objects.push_back(in_object);
 
 	//Notify top graph if necessary

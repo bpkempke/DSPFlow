@@ -1,12 +1,19 @@
-#include<string>
+#ifndef FLOWPIPE_H
+#define FLOWPIPE_H
+
+#include <string>
+#include <vector>
+#include <map>
+class flowGraph;
+class flowBlock;
 
 //Enumeration type for primitive data
 enum primType{
-	PRIM_VOID;
-	PRIM_INT8;
-	PRIM_INT32;
-	PRIM_FLOAT;
-	PRIM_DOUBLE;
+	PRIM_VOID,
+	PRIM_INT8,
+	PRIM_INT32,
+	PRIM_FLOAT,
+	PRIM_DOUBLE
 };
 
 //Data flows through pipes using classes derived from this
@@ -17,7 +24,7 @@ public:
 	virtual void parseObjectByteRepresentation(std::vector<char> in_vector)=0;
 private:
 
-}
+};
 
 //This class implements a generic resizable container which 
 // allows an arbitrary amount of data to get backed up before 
@@ -37,7 +44,7 @@ public:
 
 	//Object data accessor methods
 	void insertPipeObject(flowPipeObject *in_object);
-	flowPipeObject *getPipeObject();
+	flowPipeObject *consumePipeObject();
 	int getObjectUsage();
 
 	//Map data accessor methods
@@ -47,9 +54,9 @@ public:
 
 	//Handles to the blocks which own the pipe
 	void setInputBlock(flowBlock *in_block);
-	void setOutputBlock(flowBlcok *out_block);
-	flowBlock *getInputBlock(){return in_block};
-	flowBlock *getOutputBlock(){return out_block};
+	void setOutputBlock(flowBlock *out_block);
+	flowBlock *getInputBlock(){return in_block;};
+	flowBlock *getOutputBlock(){return out_block;};
 
 	//Just to make sure the top flowGraph knows when 
 	void setTopGraph(flowGraph *in_graph);
@@ -72,3 +79,5 @@ private:
 	std::vector<flowPipeObject*> pipe_objects;
 	std::map<std::string, flowPipeObject*> mapped_objects;
 };
+
+#endif

@@ -1,3 +1,6 @@
+#include <naclDL.h>
+#include <dlfcn.h>
+
 naclDL::naclDL(){
 
 }

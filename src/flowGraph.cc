@@ -1,5 +1,9 @@
+#include <iostream>
+#include <sstream>
+#include <string>
 #include <tinyxml2.h>
 #include <pthread.h>
+#include <flowGraph.h>
 
 /*************************************
   * flowGraph
@@ -15,46 +19,51 @@ flowGraph::flowGraph(std::string graph_desc_xml){
 	block_library = new naclDL();
 
 	//First parse the flow graph
-	XMLDocument xml_parser;
+	tinyxml2::XMLDocument xml_parser;
 	xml_parser.Parse(graph_desc_xml.c_str());
 
 	//This text must already have gotten rid of the <flowgraph> tags, so we're left with parsing individual blocks
-	XMLElement *block_element;
+	tinyxml2::XMLElement *block_element;
 	std::map<std::string, flowPipe*> pipes;
 	for(block_element = xml_parser.FirstChildElement("block"); block_element != NULL; block_element = block_element->NextSiblingElement("block")){
 		flowBlockDescription newblock_description;
 
-		XMLElement *id_element = block_element->FirstChildElement("id");
-		newblock_description.id = id_element->ToText();
-		XMLElement *function_element = block_element->FirstChildElement("function");
-		newblock_description.function = function_element->ToText();
+		tinyxml2::XMLElement *id_element = block_element->FirstChildElement("id");
+		newblock_description.id = id_element->ToText()->Value();
+		tinyxml2::XMLElement *function_element = block_element->FirstChildElement("function");
+		newblock_description.function = function_element->ToText()->Value();
 
 		//Create a new flowBlock element
 		flowBlock *new_block = addBlock(newblock_description);
 		
-		XMLElement *input_element;
-		for(input_element = block_element->FirstChildElement("input"); input_element != NULL; input_element = input_element->NextChildElement("input")){
+		tinyxml2::XMLElement *input_element;
+		for(input_element = block_element->FirstChildElement("input"); input_element != NULL; input_element = (tinyxml2::XMLElement*)input_element->NextSibling()){
 			//TODO: Does ToText() do what we want it to do here?
-			flowPipe *from_pipe = pipes[input_element->ToText()];
+			flowPipe *from_pipe = pipes[input_element->ToText()->Value()];
 			from_pipe->setOutputBlock(new_block);
 		}
-		XMLElement *output_element;
-		for(output_element = block_element->FirstChildElement("output"); output_element != NULL; output_element = output_element->NextChildElement("output")){
+		tinyxml2::XMLElement *output_element;
+		for(output_element = block_element->FirstChildElement("output"); output_element != NULL; output_element = (tinyxml2::XMLElement*)output_element->NextSibling()){
 			//We need to first determine if this is a complex pipe, or just a plain primitive pipe
-			XMLElement *type_element = output_element->FirstChildElement("primitive_type");
+			tinyxml2::XMLElement *type_element = output_element->FirstChildElement("primitive_type");
+			std::string prim_type_str = type_element->ToText()->Value();
+			primType primitive_type = PRIM_VOID;
+			if(prim_type_str == "int8")
+				primitive_type = PRIM_INT8;
+			else if(prim_type_str == "int32")
+				primitive_type = PRIM_INT32;
+			else if(prim_type_str == "float")
+				primitive_type = PRIM_FLOAT;
+			else if(prim_type_str == "double")
+				primitive_type = PRIM_DOUBLE;
 
 			//Create a new pipe, the other end of which will be determined at a later time
-			flowPipe *new_pipe;
-			if(type_element != NULL){
-				new_pipe = new flowPipe(true, type_element->ToText());
-			} else {
-				new_pipe = new flowPipe(false);
-			}
-			new_pipe.setInputBlock(new_block);
+			flowPipe *new_pipe = new flowPipe(primitive_type);
+			new_pipe->setInputBlock(new_block);
 
 			//Add it to the map so that when it's later referenced, we know what pipe we're talking about!
 			//TODO: does ToText() do what we want it to do here?
-			pipes[output_element->ToText()] = new_pipe;
+			pipes[output_element->ToText()->Value()] = new_pipe;
 
 			//Also add it to the vector of pipes so that we can keep track of it for destruction
 			flowgraph_pipes.push_back(new_pipe);
@@ -71,9 +80,13 @@ flowGraph::flowGraph(std::string graph_desc_xml){
 
 flowBlock *flowGraph::addBlock(flowBlockDescription in_desc){
 	//create the new block and add it onto the list...
-	//TODO: This needs to use the naclDL object instead of this funniness
-	flowBlock *new_block = new flowBlock(in_desc);
-	flowgraph_indices[in_desc.id] = flowgraph_blocks.length();
+	std::stringstream ss(in_desc.function, std::stringstream::out);
+	std::string newblock_library, newblock_bname;
+	std::getline(ss, newblock_library, '/');
+	std::getline(ss, newblock_bname);
+	//TODO: error handling if the block function isn't formatted correctly
+	flowBlock *new_block = block_library->newDLBlock(newblock_library, newblock_bname);
+	flowgraph_indices[in_desc.id] = flowgraph_blocks.size();
 	flowgraph_blocks.push_back(new_block);
 
 	//Add it to the ready list so that it'll run at some point
@@ -82,9 +95,9 @@ flowBlock *flowGraph::addBlock(flowBlockDescription in_desc){
 	return new_block;
 }
 
-void flowGraph::addPipe(flowBlock *source_block, bool is_primitive){
+void flowGraph::addPipe(flowBlock *source_block, primType primitive_type){
 	//Create the new pipe and add it onto the list...
-	flowPipe *new_pipe = new flowPipe(is_primitive);
+	flowPipe *new_pipe = new flowPipe(primitive_type);
 	flowgraph_pipes.push_back(new_pipe);
 
 	//Make sure the source block has a reference to the new pipe
@@ -93,7 +106,7 @@ void flowGraph::addPipe(flowBlock *source_block, bool is_primitive){
 
 void flowGraph::connectPipe(flowBlock *dest_block, flowPipe *in_pipe, std::string source_id){
 	//Get the idx of the requested block
-	int source_idx = getBlockIdx(source_id);
+	unsigned int source_idx = getBlockIdx(source_id);
 
 	//Now associate the existing pipe with its destination
 	flowgraph_blocks[source_idx]->addOutputPipe(in_pipe);
@@ -102,20 +115,20 @@ void flowGraph::connectPipe(flowBlock *dest_block, flowPipe *in_pipe, std::strin
 	
 }
 
-int flowGraph::getBlockIdx(std::string id){
+unsigned int flowGraph::getBlockIdx(std::string id){
 	//Figure out which block is associated with the stated dest_id
 	return flowgraph_indices[id];
 }	
 
 void flowGraph::removeBlock(std::string id){
 	//Find and delete the block
-	int block_index = flowgraph_indices[id];
+	unsigned int block_index = flowgraph_indices[id];
 	delete flowgraph_blocks[block_index];
-	flowgraph_blocks.erase(flowgraph_blocks.begin()+block_index,flowgraph_blocks.begin+block_index+1);
+	flowgraph_blocks.erase(flowgraph_blocks.begin()+block_index,flowgraph_blocks.begin()+block_index+1);
 	flowgraph_indices.erase(id);
 
 	//Go through and decrement the index of every block in the map which is higher than the one that's being taken out
-	std::map<std::string,int>::iterator fg_it;
+	std::map<std::string,unsigned int>::iterator fg_it;
 	for(fg_it = flowgraph_indices.begin(); fg_it != flowgraph_indices.end(); fg_it++){
 		if((*fg_it).second >= block_index)
 			(*fg_it).second--;
@@ -124,7 +137,7 @@ void flowGraph::removeBlock(std::string id){
 
 void flowGraph::sendMessage(std::string id, std::string message){
 	//Find the block
-	int block_index = flowgraph_indices[id];
+	unsigned int block_index = flowgraph_indices[id];
 
 	//Send the block the message
 	flowgraph_blocks[block_index]->process_message(message);
@@ -151,14 +164,16 @@ void flowGraph::thread_run(){
 	while(running){
 		//Start by running all of the blocks which are ready to go
 		while(ready_blocks.size()){
-			flowBlock *cur_ready_block = ready_blocks.pop_back();
+			flowBlock *cur_ready_block = ready_blocks.back();
+			ready_blocks.pop_back();
 			cur_ready_block->process();
 		}
 
 		//Then there may be data in pipes, so call all the blocks which may have been enabled by the pipe's sudden data inflow
 		//TODO: Maybe process() shouldn't be called in some cases because it'll just waste time?!
 		while(ready_pipes.size()){
-			flowPipe *cur_ready_pipe = ready_pipes.pop_back();
+			flowPipe *cur_ready_pipe = ready_pipes.back();
+			ready_pipes.pop_back();
 			flowBlock *enabled_block = cur_ready_pipe->getOutputBlock();
 			enabled_block->process();
 		}

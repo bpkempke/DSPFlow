@@ -1,19 +1,27 @@
 #
-# CDH Makefile
+# DSPFlow Makefile
 #
 # Ben Kempke
 #
+# Shared libraries should be compiled as follows:
+#  gcc -shared -nostartfiles -o bar bar.c
+#
+# Also make sure to install libdb in order to compile...:
+#  sudo apt-get install libdb-dev
 
 CC = gcc
 CPPC = g++
-THREAD_LIB = -pthread
-SOCKET_HANDLERS = ./bin/obj/socket_handler.o
+THREAD_LIB = -pthread 
+MISC_LIBS = -ldl
+DSPFLOW_CORE = src/flowGraph.cc src/flowBlock.cc src/flowPipe.cc src/naclDL.cc
+DSPFLOW_CORE_LIB = lib/flowGraph.h lib/flowBlock.h lib/flowPipe.h lib/naclDL.h
+TINYXML = src/tinyxml2.cpp
 INCLUDE = -Ilib
 
-all: uhdd
+all: dspflow
 
-uhdd: $(SOCKET_HANDLERS) $(CLIENT_INT) $(BASE64_LIB) $(SHA1_LIB) $(UHD_INT)
-	$(CPPC) $(THREAD_LIB) $(INCLUDE) src/uhd_daemon.cc $(LITHIUM_UTILS) $(SOCKET_HANDLERS) $(CLIENT_INT) $(UHD_INT) $(BASE64_LIB) $(SHA1_LIB) -luhd -o ./bin/uhdd
+dspflow: $(DSPFLOW_CORE) $(DSPFLOW_CORE_LIB) $(TINYXML)
+	$(CPPC) $(THREAD_LIB) $(INCLUDE) $(TINYXML) $(DSPFLOW_CORE) $(DSPFLOW_CORE_LIB) -o ./bin/dspflow $(MISC_LIBS)
 
 clean:
 	rm -f ./bin/obj/*.o

@@ -1,3 +1,6 @@
+#ifndef FLOWBLOCK_H
+#define FLOWBLOCK_H
+
 #include <string>
 #include <vector>
 #include <naclDL.h>
@@ -31,3 +34,5 @@ private:
 	flowBlockDescription block_info;
 	pthread_t back_thread;
 };
+
+#endif

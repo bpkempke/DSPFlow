@@ -1,4 +1,9 @@
+#ifndef NACLDL_H
+#define NACLDL_H
+
 #include <string>
+#include <map>
+class flowBlock;
 
 //Preprocessor macro for defining a class which can be dynamically loaded later!
 #define DSPFLOW_BLOCK(bn) \
@@ -9,7 +14,7 @@ extern "C" void delete_##bn(flowBlock *object){ \
 	delete object; \
 } \
 void *##bn_thread_proxy(void *ptr){ \
-	static_cast<##bn*>(ptr)->background_thread();
+	static_cast<##bn*>(ptr)->background_thread(); \
 } \
 class ##bn{
 
@@ -27,3 +32,5 @@ private:
 	void *getLibrary(std::string library);
 	std::map<std::string,void*> open_libraries;
 };
+
+#endif
