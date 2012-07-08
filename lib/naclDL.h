@@ -8,7 +8,16 @@ extern "C" flowBlock* create_##bn(){ \
 extern "C" void delete_##bn(flowBlock *object){ \
 	delete object; \
 } \
+void *##bn_thread_proxy(void *ptr){ \
+	static_cast<##bn*>(ptr)->background_thread();
+} \
 class ##bn{
+
+#define DSPFLOW_START_BACKGROUND_THREAD(bn) \
+	pthread_create(&back_thread, NULL, ##bn_thread_proxy, (void*)this);
+
+#define DSPFLOW_STOP_BACKGROUND_THREAD(bn) \
+	pthread_join(back_thread, NULL);
 
 class naclDL{
 public:

@@ -29,4 +29,5 @@ private:
 	int getMinInputPipeUsage();
 	primType getInputPrimitiveType();
 	flowBlockDescription block_info;
+	pthread_t back_thread;
 };

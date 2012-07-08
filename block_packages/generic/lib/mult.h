@@ -18,4 +18,4 @@ private:
 	//Scratch space for adding stuff together in
 	void *multed_data;
 	int multed_data_size;
-}
+};

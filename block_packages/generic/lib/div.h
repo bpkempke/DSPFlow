@@ -18,4 +18,4 @@ private:
 	//Scratch space for diving stuff together in
 	void *dived_data;
 	int dived_data_size;
-}
+};

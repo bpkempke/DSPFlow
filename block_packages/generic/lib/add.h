@@ -18,4 +18,4 @@ private:
 	//Scratch space for adding stuff together in
 	void *added_data;
 	int added_data_size;
-}
+};
