@@ -1,5 +1,6 @@
 #include <string>
 #include <vector>
+#include <naclDL.h>
 #include <flowPipe.h>
 
 //TODO: Figure out where/how flowGraph::pipeHasData() is called
@@ -24,6 +25,8 @@ private:
 	virtual void background_thread(){};
 	void producePrimitiveData(flowPipe *in_pipe, void *data, int num_bytes);
 	void producePipeObject(flowPipe *in_pipe, flowPipeObject *in_object);
-	void producetKeyValue(flowPipe *in_pipe, std::string in_key, flowPipeObject *in_value);
-	flowBlcokDescription block_info;
+	void produceKeyValue(flowPipe *in_pipe, std::string in_key, flowPipeObject *in_value);
+	int getMinInputPipeUsage();
+	primType getInputPrimitiveType();
+	flowBlockDescription block_info;
 };

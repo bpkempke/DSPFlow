@@ -5,7 +5,7 @@
 #define DEFAULT_INITIAL_SIZE 65536
 //flowPipeContainer constructor
 //TODO: probably need a way of not allocating if we don't want a primitive container?
-flowPipe::flowPipe(std::string primitive_type){
+flowPipe::flowPipe(primType primitive_type){
 	int initial_size = DEFAULT_INITIAL_SIZE;
 	this->primitive_type = primitive_type;
 
@@ -110,4 +110,8 @@ void flowPipe::resetTopGraphNotification(){
 
 void flowPipe::notifyTopGraph(){
 	top_graph->pipeHasData(this);	
+}
+
+primType flowPipe::getPrimitiveType(){
+	return primitive_type;
 }

@@ -1,5 +1,14 @@
 #include<string>
 
+//Enumeration type for primitive data
+enum primType{
+	PRIM_VOID;
+	PRIM_INT8;
+	PRIM_INT32;
+	PRIM_FLOAT;
+	PRIM_DOUBLE;
+};
+
 //Data flows through pipes using classes derived from this
 // flowPipeData class
 class flowPipeObject {
@@ -16,7 +25,7 @@ private:
 // there's only a finite amount of memory...)
 class flowPipe {
 public:
-	flowPipe(std::string primitive_type="");
+	flowPipe(primType primitive_type=PRIM_VOID);
 
 	//TODO: possibly include some locking functionality in here?
 
@@ -24,6 +33,7 @@ public:
 	void insertPrimitiveData(void *in_data, int num_bytes);
 	void *consumePrimitiveData(int num_bytes);
 	int getPrimitiveUsage();
+	primType getPrimitiveType();
 
 	//Object data accessor methods
 	void insertPipeObject(flowPipeObject *in_object);
@@ -55,7 +65,7 @@ private:
 
 	//Things to use for transporting data and/or objects
 	char *primitive_data;
-	std::string primitive_type;
+	primType primitive_type;
 	int primitive_current_usage;
 	int primitive_max_capacity;
 
