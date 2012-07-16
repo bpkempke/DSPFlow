@@ -1,3 +1,7 @@
+#include<add.h>
+#include <string.h>
+#include<cstdlib>
+
 add::add(flowBlockDescription in_desc) : flowBlock(in_desc){
 	input_prim_type = getInputPrimitiveType();
 	if(input_prim_type == PRIM_VOID) //TODO: THROW SOMETHING SENSIBLE!
@@ -6,7 +10,7 @@ add::add(flowBlockDescription in_desc) : flowBlock(in_desc){
 	//We'll set up a function pointer since we don't want to waste time doing a jump table or whatever every time we need to process data...
 	if(input_prim_type == PRIM_INT8)
 		add_fptr = &add::add_int8;
-	else if(input_prim_type == PRIM_IN32)
+	else if(input_prim_type == PRIM_INT32)
 		add_fptr = &add::add_int32;
 	else if(input_prim_type == PRIM_FLOAT)
 		add_fptr = &add::add_float;
@@ -18,7 +22,7 @@ add::add(flowBlockDescription in_desc) : flowBlock(in_desc){
 }
 
 add::~add(){
-	delete added_data;
+	free(added_data);
 }
 
 void add::process(){
@@ -26,7 +30,7 @@ void add::process(){
 	int num_input_elements = getMinInputPipeUsage();
 
 	//For now, just do a dumb addition based on the primitive type of the input pipes
-	(*add_fptr)(num_input_elements);
+	(*this.*add_fptr)(num_input_elements);
 }
 
 //TODO: put in some intrinsics for processors which have SSE2/SSE3/SSE4 support (sounds like a big pain...
@@ -35,8 +39,8 @@ void add::add_int8(int num_elements){
 	//Check to see if we have enough space
 	if(num_elements > added_data_size){
 		added_data_size = num_elements*2;
-		delete added_data;
-		added_data = new char[added_data_size];
+		free(added_data);
+		added_data = malloc(added_data_size);
 	}
 
 	char *added_data_ptr = (char*)added_data;
@@ -46,7 +50,7 @@ void add::add_int8(int num_elements){
 
 	//Now add stuff together into the scratchspace
 	for(int ii=0; ii < block_info.inputs.size(); ii++){
-		char *current_input_buffer = block_info.inputs[ii]->consumePrimitiveData(num_elements);
+		char *current_input_buffer = (char*)block_info.inputs[ii]->consumePrimitiveData(num_elements);
 		for(int jj=0; jj < num_elements; jj++){
 			added_data_ptr[jj] += current_input_buffer[jj];
 		}
@@ -57,8 +61,8 @@ void add::add_int32(int num_elements){
 	//Check to see if we have enough space
 	if(num_elements*4 > added_data_size){
 		added_data_size = num_elements*2*4;
-		delete added_data;
-		added_data = new int32_t[added_data_size];
+		free(added_data);
+		added_data = malloc(added_data_size*sizeof(int32_t));
 	}
 	
 	int32_t *added_data_ptr = (int32_t*)added_data;
@@ -68,7 +72,7 @@ void add::add_int32(int num_elements){
 
 	//Now add stuff together into the scratchspace
 	for(int ii=0; ii < block_info.inputs.size(); ii++){
-		int32_t *current_input_buffer = block_info.inputs[ii]->consumePrimitiveData(num_elements);
+		int32_t *current_input_buffer = (int32_t*)block_info.inputs[ii]->consumePrimitiveData(num_elements);
 		for(int jj=0; jj < num_elements; jj++){
 			added_data_ptr[jj] += current_input_buffer[jj];
 		}
@@ -79,8 +83,8 @@ void add::add_float(int num_elements){
 	//Check to see if we have enough space
 	if(num_elements*4 > added_data_size){
 		added_data_size = num_elements*2*4;
-		delete added_data;
-		added_data = new float[added_data_size];
+		free(added_data);
+		added_data = malloc(added_data_size*sizeof(float));
 	}
 	
 	float *added_data_ptr = (float*)added_data;
@@ -90,19 +94,19 @@ void add::add_float(int num_elements){
 
 	//Now add stuff together into the scratchspace
 	for(int ii=0; ii < block_info.inputs.size(); ii++){
-		float *current_input_buffer = block_info.inputs[ii]->consumePrimitiveData(num_elements);
+		float *current_input_buffer = (float*)block_info.inputs[ii]->consumePrimitiveData(num_elements);
 		for(int jj=0; jj < num_elements; jj++){
-			added_data[jj] += current_input_buffer[jj];
+			added_data_ptr[jj] += current_input_buffer[jj];
 		}
 	}
 }
 
-void add:add_double(int num_elements){
+void add::add_double(int num_elements){
 	//Check to see if we have enough space
 	if(num_elements*8 > added_data_size){
 		added_data_size = num_elements*2*8;
-		delete added_data;
-		added_data = new double[added_data_size];
+		free(added_data);
+		added_data = malloc(added_data_size*sizeof(double));
 	}
 	
 	double *added_data_ptr = (double*)added_data;
@@ -112,7 +116,7 @@ void add:add_double(int num_elements){
 
 	//Now add stuff together into the scratchspace
 	for(int ii=0; ii < block_info.inputs.size(); ii++){
-		double *current_input_buffer = block_info.inputs[ii]->consumePrimitiveData(num_elements);
+		double *current_input_buffer = (double*)block_info.inputs[ii]->consumePrimitiveData(num_elements);
 		for(int jj=0; jj < num_elements; jj++){
 			added_data_ptr[jj] += current_input_buffer[jj];
 		}

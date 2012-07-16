@@ -7,19 +7,18 @@ class flowBlock;
 
 //Preprocessor macro for defining a class which can be dynamically loaded later!
 #define DSPFLOW_BLOCK(bn) \
-extern "C" flowBlock* create_##bn(){ \
-	return new ##bn(); \
+extern "C" flowBlock* create_##bn(flowBlockDescription in_desc){ \
+	return new bn(in_desc); \
 } \
 extern "C" void delete_##bn(flowBlock *object){ \
 	delete object; \
 } \
-void *##bn_thread_proxy(void *ptr){ \
-	static_cast<##bn*>(ptr)->background_thread(); \
-} \
-class ##bn{
+void* bn##_thread_proxy(void *ptr){ \
+	static_cast<bn*>(ptr)->background_thread(); \
+}
 
 #define DSPFLOW_START_BACKGROUND_THREAD(bn) \
-	pthread_create(&back_thread, NULL, ##bn_thread_proxy, (void*)this);
+	pthread_create(&back_thread, NULL, bn##_thread_proxy, (void*)this);
 
 #define DSPFLOW_STOP_BACKGROUND_THREAD(bn) \
 	pthread_join(back_thread, NULL);

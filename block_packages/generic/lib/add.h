@@ -1,6 +1,6 @@
 #include <flowBlock.h>
 
-DSPFLOW_BLOCK(add){
+class add:public flowBlock{
 public:
 	add(flowBlockDescription in_desc);
 	~add();
@@ -19,3 +19,5 @@ private:
 	void *added_data;
 	int added_data_size;
 };
+
+DSPFLOW_BLOCK(add);

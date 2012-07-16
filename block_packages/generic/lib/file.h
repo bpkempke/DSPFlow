@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <flowBlock.h>
 
 #define FILE_READ_SIZE 8092
 
@@ -7,15 +8,17 @@ enum fileType {
 	FILE_WRITE
 };
 
-DSPFLOW_BLOCK(file){
+class file:public flowBlock{
 public:
-	file();
+	file(flowBlockDescription in_desc);
 	~file();
 	void process();
-private:
 	void background_thread();
+private:
 	fileType file_type;
 	FILE *file_ptr;
 	bool running;
 	void *temp_read_data;
 };
+
+DSPFLOW_BLOCK(file);

@@ -1,22 +1,26 @@
+#include <flowBlock.h>
+#include <socketInterface.h>
+
+class socket_server;
 class socketServerIntermediary : public fdInterface{
 public:
-	socketServerIntermediary(socketInterface *sock_in, flowBlock *in_upstream_block);
+	socketServerIntermediary(socketInterface *sock_in, socket_server *in_upstream_block);
 	void fdBytesReceived(char *buffer, int num_bytes, fdInterface *from_interface);
 	void dataFromUpstream(char *data, int num_bytes, fdInterface *from_interface);
 private:
 	socketInterface *downstream_interface;
-	flowBlock *upstream_block;
+	socket_server *upstream_block;
 };
 
-DSPFLOW_BLOCK(socket_server){
+class socket_server:public flowBlock{
 public:
-	socket_server();
+	socket_server(flowBlockDescription in_desc);
 	~socket_server();
 	void process();
 	void got_socket_data(char *buffer, int num_bytes);
 	flowBlock *replicate_block();
-private:
 	void background_thread();
+private:
 	bool is_running;
 
 	//socket-specific information
@@ -25,7 +29,9 @@ private:
 
 	//Actual socket interface class
 	socketInterface *sock;
-	socketType socket_type;
+	socketIntType socket_type;
 	pthread_t conn_listener_thread;
 	socketServerIntermediary *sock_trans;
 };
+
+DSPFLOW_BLOCK(socket_server);

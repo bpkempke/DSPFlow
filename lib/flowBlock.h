@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include <map>
 #include <naclDL.h>
 #include <flowPipe.h>
 
@@ -12,6 +13,7 @@ struct flowBlockDescription{
 	std::string function;
 	std::vector<flowPipe*> inputs;
 	std::vector<flowPipe*> outputs;
+	std::map<std::string,std::string> key_value;
 	bool thread_needed;
 };
 
@@ -24,15 +26,17 @@ public:
 	void addOutputPipe(flowPipe* out_pipe);
 	void addInputPipe(flowPipe* in_pipe);
 	std::string getId();
+
+	virtual void background_thread(){}; //TODO: Would be nice if this wasn't exposed...
+	pthread_t back_thread; //TODO: Would be nice if this wasn't exposed...
+protected:
+	primType getInputPrimitiveType();
+	int getMinInputPipeUsage();
+	flowBlockDescription block_info;
 private:
-	virtual void background_thread(){};
 	void producePrimitiveData(flowPipe *in_pipe, void *data, int num_bytes);
 	void producePipeObject(flowPipe *in_pipe, flowPipeObject *in_object);
 	void produceKeyValue(flowPipe *in_pipe, std::string in_key, flowPipeObject *in_value);
-	int getMinInputPipeUsage();
-	primType getInputPrimitiveType();
-	flowBlockDescription block_info;
-	pthread_t back_thread;
 };
 
 #endif

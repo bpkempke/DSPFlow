@@ -1,6 +1,6 @@
 #include <flowBlock.h>
 
-DSPFLOW_BLOCK(div){
+class div:public flowBlock{
 public:
 	div(flowBlockDescription in_desc);
 	~div();
@@ -19,3 +19,5 @@ private:
 	void *dived_data;
 	int dived_data_size;
 };
+
+DSPFLOW_BLOCK(div);

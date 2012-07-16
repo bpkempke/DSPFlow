@@ -19,6 +19,7 @@ set(DSPFlow_VERSION_MINOR 1)
 #Set the paths to find the correct header files
 include_directories(
 	${CMAKE_SOURCE_DIR}/lib
+	${CMAKE_SOURCE_DIR}/block_packages/generic/lib
 )
 
 #Find the threading library 'package'
@@ -30,5 +31,7 @@ find_package(DL)
 if(NOT DL_FOUND)
 	message(FATAL_ERROR "NO libdl... shutting down...")
 endif()
+#message(FATAL_ERROR "${DL_LIBRARIES}")
 
 add_subdirectory(src)
+add_subdirectory(block_packages)

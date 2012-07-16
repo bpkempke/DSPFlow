@@ -39,7 +39,7 @@ if(NOT DL_FOUND)
     set(DL_LIBRARY "")
 endif()
 
-#set(DL_LIBRARIES ${DL_LIBRARY})
+set(DL_LIBRARIES ${DL_LIBRARY})
 
 #mark_as_advanced(DL_LIBRARY DL_INCLUDE_DIR)
 

@@ -1,6 +1,46 @@
 #include<socket_server.h>
+#include <cstdlib>
+#include <netinet/in.h>
+#include <string.h>
 
-socket_server::socket_server(){
+//TODO: This is stolen from sdrportal, should probably do this differently
+pthread_mutex_t uplink_lock = PTHREAD_MUTEX_INITIALIZER;
+int newSocket(int port, socketInterface *in_interface, bool is_tcp/*FALSE IF UDP*/){
+	struct sockaddr_in in_addr;
+
+	int ret_id;
+
+	//Open the socket descriptor
+	ret_id = socket(AF_INET, (is_tcp) ? SOCK_STREAM : SOCK_DGRAM, (is_tcp) ? 0 : IPPROTO_UDP);
+
+	// set SO_REUSEADDR on a socket to true (1):
+	int optval = 1;
+	setsockopt(ret_id, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof optval);
+
+	//Set up socket-specific information, such as address, etc.
+	memset((char *)&in_addr, 0, sizeof(sockaddr_in));
+	in_addr.sin_family = AF_INET;
+	in_addr.sin_addr.s_addr = INADDR_ANY;
+	in_addr.sin_port = htons(port);
+
+	if(bind(ret_id, (struct sockaddr *) &in_addr, sizeof(in_addr)) < 0)
+	{
+		exit(1);
+	}
+
+	//If it's UDP, we only need one thread.  If TCP, we will accept up to 5 simultaneous connections (on different threads)
+	if(is_tcp)
+		listen(ret_id, 5);
+	else
+		new socketThread(ret_id, in_interface, &uplink_lock, true);
+
+	//Bind the new file id to the socket interface so we have access to it in the future
+	in_interface->bind(ret_id);
+	return ret_id;
+}
+
+
+socket_server::socket_server(flowBlockDescription in_desc): flowBlock(in_desc){
 	int in_socket_port = atoi(block_info.key_value["socket_port"].c_str());
 	std::string in_socket_type = block_info.key_value["socket_type"];
 
@@ -18,7 +58,7 @@ socket_server::socket_server(){
 	//Create a new socket to listen on
 	int socket_fd = newSocket(in_socket_port, sock, true);
 
-	sock_trans = new socket_server_intermediary(sock);
+	sock_trans = new socketServerIntermediary(sock, this);
 
 	is_running = true;
 }
@@ -36,22 +76,23 @@ void socket_server::process(){
 	//TODO: Just copied a lot of this out of file.cc... should probably go somewhere common to the two
 	//Just run through all the inputs sequentially and write them all out to file in that order...
 	for(int ii=0; ii < block_info.inputs.size(); ii++){
-		primType cur_input_primtype = block_info.inputs->getPrimitiveType();
-		int num_elements = block_info.inputs->getPrimitiveUsage();
+		primType cur_input_primtype = block_info.inputs[ii]->getPrimitiveType();
+		int num_elements = block_info.inputs[ii]->getPrimitiveUsage();
+		//TODO: All this casting is probably a little confusing and unnecessary
 		if(cur_input_primtype == PRIM_VOID){
 			//TODO: This is where we would query for the object's byte representation
 		} else if(cur_input_primtype == PRIM_INT8){
-			char *data = block_info.inputs->consumePrimitiveData(num_elements);
+			char *data = (char*)block_info.inputs[ii]->consumePrimitiveData(num_elements);
 			sock_trans->dataFromUpstream(data, num_elements, NULL);
 		} else if(cur_input_primtype == PRIM_INT32){
-			int32_t *data = block_info.inputs->consumePrimitiveData(num_elements);
-			sock_trans->dataFromUpstream(data, num_elements*sizeof(int32_t, NULL);
+			int32_t *data = (int32_t*)block_info.inputs[ii]->consumePrimitiveData(num_elements);
+			sock_trans->dataFromUpstream((char*)data, num_elements*sizeof(int32_t), NULL);
 		} else if(cur_input_primtype == PRIM_FLOAT){
-			float *data = block_info.inputs->consumePrimitiveData(num_elements);
-			sock_trans->dataFromUpstream(data, num_elements*sizeof(float), NULL);
+			float *data = (float*)block_info.inputs[ii]->consumePrimitiveData(num_elements);
+			sock_trans->dataFromUpstream((char*)data, num_elements*sizeof(float), NULL);
 		} else if(cur_input_primtype == PRIM_DOUBLE){
-			double *data = block_info.inputs->consumePrimitiveData(num_elements);
-			sock_trans->dataFromUpstream(data, num_elements*sizeof(double), NULL);
+			double *data = (double*)block_info.inputs[ii]->consumePrimitiveData(num_elements);
+			sock_trans->dataFromUpstream((char*)data, num_elements*sizeof(double), NULL);
 		}
 	}
 
@@ -92,7 +133,7 @@ void socket_server::background_thread(){
 }
 
 //TODO: This is particularly inefficient, but don't really know how to 
-socketServerIntermediary::socketServerIntermediary(socketInterface *in_sock, flowBlock *in_upstream_block){
+socketServerIntermediary::socketServerIntermediary(socketInterface *in_sock, socket_server *in_upstream_block){
 	in_sock->registerUpstreamInterface(this);
 	upstream_block = in_upstream_block;
 }

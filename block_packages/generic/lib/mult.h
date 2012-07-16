@@ -1,6 +1,6 @@
 #include <flowBlock.h>
 
-DSPFLOW_BLOCK(mult){
+class mult:public flowBlock{
 public:
 	mult(flowBlockDescription in_desc);
 	~mult();
@@ -19,3 +19,5 @@ private:
 	void *multed_data;
 	int multed_data_size;
 };
+
+DSPFLOW_BLOCK(mult);
