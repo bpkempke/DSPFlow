@@ -25,6 +25,9 @@ include_directories(
 #Find the threading library 'package'
 find_package(Threads)
 
+#Add in debugging symbols for now... TODO: Get rid of debugging symbols
+set(CMAKE_CXX_FLAGS "-g -Wall")
+
 #And the library which provides dynamic linking (will be different for NaCl though...)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
 find_package(DL)

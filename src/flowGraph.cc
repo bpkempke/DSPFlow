@@ -21,17 +21,18 @@ flowGraph::flowGraph(std::string graph_desc_xml){
 	//First parse the flow graph
 	tinyxml2::XMLDocument xml_parser;
 	xml_parser.Parse(graph_desc_xml.c_str());
+	tinyxml2::XMLElement *flowgraph = xml_parser.FirstChildElement("flowgraph");
 
 	//This text must already have gotten rid of the <flowgraph> tags, so we're left with parsing individual blocks
 	tinyxml2::XMLElement *block_element;
 	std::map<std::string, flowPipe*> pipes;
-	for(block_element = xml_parser.FirstChildElement("block"); block_element != NULL; block_element = block_element->NextSiblingElement("block")){
+	for(block_element = flowgraph->FirstChildElement("block"); block_element != NULL; block_element = block_element->NextSiblingElement("block")){
 		flowBlockDescription newblock_description;
 
 		tinyxml2::XMLElement *id_element = block_element->FirstChildElement("id");
-		newblock_description.id = id_element->ToText()->Value();
+		newblock_description.id = id_element->FirstChild()->Value();
 		tinyxml2::XMLElement *function_element = block_element->FirstChildElement("function");
-		newblock_description.function = function_element->ToText()->Value();
+		newblock_description.function = function_element->FirstChild()->Value();
 
 		//Create a new flowBlock element
 		flowBlock *new_block = addBlock(newblock_description);
@@ -39,14 +40,14 @@ flowGraph::flowGraph(std::string graph_desc_xml){
 		tinyxml2::XMLElement *input_element;
 		for(input_element = block_element->FirstChildElement("input"); input_element != NULL; input_element = (tinyxml2::XMLElement*)input_element->NextSibling()){
 			//TODO: Does ToText() do what we want it to do here?
-			flowPipe *from_pipe = pipes[input_element->ToText()->Value()];
+			flowPipe *from_pipe = pipes[input_element->FirstChild()->Value()];
 			from_pipe->setOutputBlock(new_block);
 		}
 		tinyxml2::XMLElement *output_element;
 		for(output_element = block_element->FirstChildElement("output"); output_element != NULL; output_element = (tinyxml2::XMLElement*)output_element->NextSibling()){
 			//We need to first determine if this is a complex pipe, or just a plain primitive pipe
 			tinyxml2::XMLElement *type_element = output_element->FirstChildElement("primitive_type");
-			std::string prim_type_str = type_element->ToText()->Value();
+			std::string prim_type_str = type_element->FirstChild()->Value();
 			primType primitive_type = PRIM_VOID;
 			if(prim_type_str == "int8")
 				primitive_type = PRIM_INT8;
@@ -63,7 +64,7 @@ flowGraph::flowGraph(std::string graph_desc_xml){
 
 			//Add it to the map so that when it's later referenced, we know what pipe we're talking about!
 			//TODO: does ToText() do what we want it to do here?
-			pipes[output_element->ToText()->Value()] = new_pipe;
+			pipes[output_element->FirstChild()->Value()] = new_pipe;
 
 			//Also add it to the vector of pipes so that we can keep track of it for destruction
 			flowgraph_pipes.push_back(new_pipe);
@@ -80,7 +81,8 @@ flowGraph::flowGraph(std::string graph_desc_xml){
 
 flowBlock *flowGraph::addBlock(flowBlockDescription in_desc){
 	//create the new block and add it onto the list...
-	std::stringstream ss(in_desc.function, std::stringstream::out);
+	std::stringstream ss(std::stringstream::in | std::stringstream::out);
+	ss << in_desc.function;
 	std::string newblock_library, newblock_bname;
 	std::getline(ss, newblock_library, '/');
 	std::getline(ss, newblock_bname);

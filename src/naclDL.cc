@@ -1,5 +1,6 @@
 #include <naclDL.h>
 #include <dlfcn.h>
+#include <stdio.h>
 
 naclDL::naclDL(){
 
@@ -25,9 +26,12 @@ void *naclDL::getLibrary(std::string library){
 	std::map<std::string,void*>::iterator find_library = open_libraries.find(library);
 	if(find_library == open_libraries.end()){
 		//Library not found! Load it in...
-		std::string filename = library;
-		filename += ".so";
+		std::string filename = "../block_packages/generic/src/libDSPFlow_" + library + ".so";
+		//TODO: This is a bit of a kludge for now.... figure out how to make this better....
+		//TODO: Put in some more error checking here!!!
 		void *handle = dlopen(filename.c_str(), RTLD_NOW);
+		open_libraries[library] = handle;
+		printf("dlerror(): %s\n", dlerror());
 		return handle;
 	} else {
 		//Library found, just give back the pointer
