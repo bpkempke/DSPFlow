@@ -21,6 +21,7 @@ struct flowBlockDescription{
 class flowBlock{
 public:
 	flowBlock(flowBlockDescription in_description);
+	virtual ~flowBlock() =0;
 	virtual void process() =0;
 	virtual void process_message(std::string in_message){};//TODO: we may want to make messages a class or struct...
 	void addOutputPipe(flowPipe* out_pipe);
@@ -38,5 +39,6 @@ private:
 	void producePipeObject(flowPipe *in_pipe, flowPipeObject *in_object);
 	void produceKeyValue(flowPipe *in_pipe, std::string in_key, flowPipeObject *in_value);
 };
+inline flowBlock::~flowBlock(){}
 
 #endif

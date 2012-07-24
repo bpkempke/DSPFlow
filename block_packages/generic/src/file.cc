@@ -70,7 +70,11 @@ void *file::background_thread(){
 
 		//Put it on the top output flowPipe (ignore the rest if there are any...)
 		block_info.outputs[0]->insertPrimitiveData(temp_read_data, FILE_READ_SIZE);
+#ifdef __APPLE__
+		pthread_yield_np(); //TODO: is this good enough for Mac???
+#else
 		pthread_yield();
+#endif
 		//TODO: May need to put a check in here to make sure that the output doesn't get backed up...
 	}
 	return NULL;
