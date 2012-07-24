@@ -6,13 +6,13 @@ naclDL::naclDL(){
 
 }
 
-flowBlock *naclDL::newDLBlock(std::string library, std::string block_name){
+flowBlock *naclDL::newDLBlock(std::string library, std::string block_name, flowBlockDescription in_desc){
 	void *library_handle = getLibrary(library);
-	flowBlock* (*create)();
+	flowBlock* (*create)(flowBlockDescription);
 	std::string create_fcname = "create_";
 	create_fcname += block_name;
-	create = (flowBlock* (*)())dlsym(library_handle, create_fcname.c_str());
-	flowBlock *new_block = (flowBlock*)create();
+	create = (flowBlock* (*)(flowBlockDescription))dlsym(library_handle, create_fcname.c_str());
+	flowBlock *new_block = (flowBlock*)create(in_desc);
 	return new_block;
 }
 

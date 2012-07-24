@@ -3,6 +3,7 @@
 
 #include <flowBlock.h>
 #include <flowPipe.h>
+#include <naclDL.h>
 
 class flowGraph{
 public:

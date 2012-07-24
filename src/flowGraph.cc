@@ -25,7 +25,12 @@ flowGraph::flowGraph(std::string graph_desc_xml){
 
 	//This text must already have gotten rid of the <flowgraph> tags, so we're left with parsing individual blocks
 	tinyxml2::XMLElement *block_element;
-	std::map<std::string, flowPipe*> pipes;
+
+	//Variables used to keep track of the found pipes, blocks, and their mappings
+	int cur_block_index = 0;
+	std::map<std::string, int> input_pipe_mappings;
+	std::map<std::string, flowPipe *> pipes;
+	std::vector<flowBlockDescription> block_descriptions;
 	for(block_element = flowgraph->FirstChildElement("block"); block_element != NULL; block_element = block_element->NextSiblingElement("block")){
 		flowBlockDescription newblock_description;
 
@@ -48,43 +53,65 @@ flowGraph::flowGraph(std::string graph_desc_xml){
 			newblock_description.key_value[cur_key] = cur_value;
 		}
 
-		//Create a new flowBlock element
-		flowBlock *new_block = addBlock(newblock_description);
-		printf("Created a block...\n");
 		
 		for(input_element = block_element->FirstChildElement("input"); input_element != NULL; input_element = (tinyxml2::XMLElement*)input_element->NextSiblingElement("input")){
 			//TODO: Does ToText() do what we want it to do here?
-			flowPipe *from_pipe = pipes[input_element->FirstChild()->Value()];
-			from_pipe->setOutputBlock(new_block);
+			input_pipe_mappings[input_element->FirstChild()->Value()] = cur_block_index;
 		}
 		tinyxml2::XMLElement *output_element;
 		for(output_element = block_element->FirstChildElement("output"); output_element != NULL; output_element = (tinyxml2::XMLElement*)output_element->NextSiblingElement("output")){
 			//We need to first determine if this is a complex pipe, or just a plain primitive pipe
-			tinyxml2::XMLElement *type_element = output_element->FirstChildElement("primitive_type");
-			std::string prim_type_str = type_element->FirstChild()->Value();
+			const char *prim_type_str = output_element->Attribute("prim_type");
 			primType primitive_type = PRIM_VOID;
-			if(prim_type_str == "int8")
+			if(!strcmp(prim_type_str,"int8"))
 				primitive_type = PRIM_INT8;
-			else if(prim_type_str == "int32")
+			else if(!strcmp(prim_type_str,"int32"))
 				primitive_type = PRIM_INT32;
-			else if(prim_type_str == "float")
+			else if(!strcmp(prim_type_str,"float"))
 				primitive_type = PRIM_FLOAT;
-			else if(prim_type_str == "double")
+			else if(!strcmp(prim_type_str,"double"))
 				primitive_type = PRIM_DOUBLE;
 
 			//Create a new pipe, the other end of which will be determined at a later time
 			flowPipe *new_pipe = new flowPipe(primitive_type);
-			new_pipe->setInputBlock(new_block);
-
-			//Add it to the map so that when it's later referenced, we know what pipe we're talking about!
-			//TODO: does ToText() do what we want it to do here?
 			pipes[output_element->FirstChild()->Value()] = new_pipe;
 
 			//Also add it to the vector of pipes so that we can keep track of it for destruction
 			flowgraph_pipes.push_back(new_pipe);
 
+			//We can also link this new pipe into the current block description
+			newblock_description.outputs.push_back(new_pipe);
 		}
 
+		//Push the current block description onto the stack...
+		block_descriptions.push_back(newblock_description);
+
+		//Increment the current block index since we've created a new block!
+		cur_block_index++;
+
+	}
+
+	//Now we just have to connect all the inputs
+	//TODO Probably would be good if we were able to specify which port inputs/outputs belong to....
+	for(std::map<std::string,int>::iterator it=input_pipe_mappings.begin(); it != input_pipe_mappings.end(); it++){
+		int which_block = (*it).second;
+		flowPipe *which_pipe = pipes[(*it).first];
+		block_descriptions[which_block].inputs.push_back(which_pipe);
+	}
+
+	//Lastly, instantiate all the blocks...
+	for(unsigned int ii=0; ii < block_descriptions.size(); ii++){
+		//Create a new flowBlock element
+		flowBlock *new_block = addBlock(block_descriptions[ii]);
+
+		//Lastly, go through all the input and output pipe arrays and connect everything together
+		for(unsigned int jj=0; jj < block_descriptions[ii].outputs.size(); jj++){
+			block_descriptions[jj].outputs[jj]->setInputBlock(new_block);
+		}
+		for(unsigned int jj=0; jj < block_descriptions[ii].inputs.size(); jj++){
+			block_descriptions[jj].inputs[jj]->setOutputBlock(new_block);
+		}
+		flowgraph_blocks.push_back(new_block);
 	}
 
 	//Create the main thread to run this flowgraph
@@ -100,8 +127,9 @@ flowBlock *flowGraph::addBlock(flowBlockDescription in_desc){
 	std::string newblock_library, newblock_bname;
 	std::getline(ss, newblock_library, '/');
 	std::getline(ss, newblock_bname);
+	printf("Library: %s, Blockname: %s\n", newblock_library.c_str(), newblock_bname.c_str());
 	//TODO: error handling if the block function isn't formatted correctly
-	flowBlock *new_block = block_library->newDLBlock(newblock_library, newblock_bname);
+	flowBlock *new_block = block_library->newDLBlock(newblock_library, newblock_bname, in_desc);
 	flowgraph_indices[in_desc.id] = flowgraph_blocks.size();
 	flowgraph_blocks.push_back(new_block);
 
