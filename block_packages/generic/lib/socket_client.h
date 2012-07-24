@@ -7,7 +7,7 @@ public:
 	~socket_client();
 	void process();
 	flowBlock *replicate_block();
-	void background_thread();
+	void *background_thread();
 private:
 	int socket_fd;
 	char temp_read_data[1000];

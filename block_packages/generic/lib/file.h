@@ -13,7 +13,7 @@ public:
 	file(flowBlockDescription in_desc);
 	~file();
 	void process();
-	void background_thread();
+	void *background_thread();
 private:
 	fileType file_type;
 	FILE *file_ptr;

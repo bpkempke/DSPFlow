@@ -14,7 +14,7 @@ extern "C" void delete_##bn(flowBlock *object){ \
 	delete object; \
 } \
 void* bn##_thread_proxy(void *ptr){ \
-	static_cast<class bn*>(ptr)->background_thread(); \
+	return static_cast<class bn*>(ptr)->background_thread(); \
 }
 
 #define DSPFLOW_START_BACKGROUND_THREAD(bn) \

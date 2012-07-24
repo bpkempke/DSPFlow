@@ -19,7 +19,7 @@ public:
 	void process();
 	void got_socket_data(char *buffer, int num_bytes);
 	flowBlock *replicate_block();
-	void background_thread();
+	void *background_thread();
 private:
 	bool is_running;
 

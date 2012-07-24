@@ -49,7 +49,7 @@ void mult::mult_int8(int num_elements){
 	memcpy(multed_data_ptr, block_info.inputs[0]->consumePrimitiveData(num_elements), num_elements);
 
 	//Now mult stuff together into the scratchspace
-	for(int ii=0; ii < block_info.inputs.size(); ii++){
+	for(unsigned int ii=0; ii < block_info.inputs.size(); ii++){
 		char *current_input_buffer = (char*)block_info.inputs[ii]->consumePrimitiveData(num_elements);
 		for(int jj=0; jj < num_elements; jj++){
 			multed_data_ptr[jj] *= current_input_buffer[jj];
@@ -71,7 +71,7 @@ void mult::mult_int32(int num_elements){
 	memcpy(multed_data_ptr, block_info.inputs[0]->consumePrimitiveData(num_elements), num_elements*4);
 
 	//Now mult stuff together into the scratchspace
-	for(int ii=0; ii < block_info.inputs.size(); ii++){
+	for(unsigned int ii=0; ii < block_info.inputs.size(); ii++){
 		int32_t *current_input_buffer = (int32_t*)block_info.inputs[ii]->consumePrimitiveData(num_elements);
 		for(int jj=0; jj < num_elements; jj++){
 			multed_data_ptr[jj] *= current_input_buffer[jj];
@@ -93,7 +93,7 @@ void mult::mult_float(int num_elements){
 	memcpy(multed_data, block_info.inputs[0]->consumePrimitiveData(num_elements), num_elements*4);
 
 	//Now mult stuff together into the scratchspace
-	for(int ii=0; ii < block_info.inputs.size(); ii++){
+	for(unsigned int ii=0; ii < block_info.inputs.size(); ii++){
 		float *current_input_buffer = (float*)block_info.inputs[ii]->consumePrimitiveData(num_elements);
 		for(int jj=0; jj < num_elements; jj++){
 			multed_data_ptr[jj] *= current_input_buffer[jj];
@@ -115,7 +115,7 @@ void mult::mult_double(int num_elements){
 	memcpy(multed_data_ptr, block_info.inputs[0]->consumePrimitiveData(num_elements), num_elements*8);
 
 	//Now mult stuff together into the scratchspace
-	for(int ii=0; ii < block_info.inputs.size(); ii++){
+	for(unsigned int ii=0; ii < block_info.inputs.size(); ii++){
 		double *current_input_buffer = (double*)block_info.inputs[ii]->consumePrimitiveData(num_elements);
 		for(int jj=0; jj < num_elements; jj++){
 			multed_data_ptr[jj] *= current_input_buffer[jj];

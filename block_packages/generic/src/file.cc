@@ -40,7 +40,7 @@ void file::process(){
 		//We should never get here...
 	} else {
 		//Just run through all the inputs sequentially and write them all out to file in that order...
-		for(int ii=0; ii < block_info.inputs.size(); ii++){
+		for(unsigned int ii=0; ii < block_info.inputs.size(); ii++){
 			primType cur_input_primtype = block_info.inputs[ii]->getPrimitiveType();
 			int num_elements = block_info.inputs[ii]->getPrimitiveUsage();
 			if(cur_input_primtype == PRIM_VOID){
@@ -62,7 +62,7 @@ void file::process(){
 	}
 }
 
-void file::background_thread(){
+void *file::background_thread(){
 	running = true;
 	while(running){
 		//Read a random amount of data
@@ -73,4 +73,5 @@ void file::background_thread(){
 		pthread_yield();
 		//TODO: May need to put a check in here to make sure that the output doesn't get backed up...
 	}
+	return NULL;
 }

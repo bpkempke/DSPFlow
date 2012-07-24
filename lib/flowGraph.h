@@ -15,7 +15,7 @@ public:
 	void pipeHasData(flowPipe *in_pipe);
 	void run();
 	void stop();
-	void thread_run(); //TODO: This really probably shouldn't be public, but it has to be in order to get the proxy to work correctly... hmmm....
+	void *thread_run(); //TODO: This really probably shouldn't be public, but it has to be in order to get the proxy to work correctly... hmmm....
 private:
 	unsigned int getBlockIdx(std::string id);
 	std::vector<flowBlock*> flowgraph_blocks;

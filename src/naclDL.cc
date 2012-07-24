@@ -13,6 +13,7 @@ flowBlock *naclDL::newDLBlock(std::string library, std::string block_name){
 	create_fcname += block_name;
 	create = (flowBlock* (*)())dlsym(library_handle, create_fcname.c_str());
 	flowBlock *new_block = (flowBlock*)create();
+	return new_block;
 }
 
 //Destroy stuff

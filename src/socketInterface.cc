@@ -41,7 +41,7 @@ void socketInterface::fdBytesReceived(char *buffer, int num_bytes, fdInterface *
 	//This function packetizes and then distributes incoming bytes
 	//TODO: this should probably be done faster than a linear search, but with only a few clients, it should be fine
 	int client_index = 0;
-	for(int i = 0; i < clients.size(); i++){
+	for(unsigned int i = 0; i < clients.size(); i++){
 		if(from_interface == clients[i]){
 			client_index = i;
 			break;
@@ -69,7 +69,7 @@ void socketInterface::registerDownstreamInterface(fdInterface *in_thread){
 }
 
 void socketInterface::deleteDownstreamInterface(fdInterface *in_thread){
-	for(int i = 0; i < clients.size(); i++){
+	for(unsigned int i = 0; i < clients.size(); i++){
 		if(clients[i] == in_thread){
 			clients.erase(clients.begin() + i);
 			client_parsers.erase(client_parsers.begin() + i);
@@ -86,7 +86,7 @@ void socketInterface::registerUpstreamInterface(fdInterface *up_int){
 
 void socketInterface::dataFromUpstream(char *message, int num_bytes, fdInterface *from_interface){
 	messageType in_message = {message, num_bytes, DOWNSTREAM};
-	for(int ii = 0; ii < clients.size(); ii++){
+	for(unsigned int ii = 0; ii < clients.size(); ii++){
 		//FROM THE USRP
 		vector<messageType> new_messages = client_parsers[ii]->parseUpstreamMessage(in_message);
 		dispatchMessages(new_messages, ii);
@@ -94,7 +94,7 @@ void socketInterface::dataFromUpstream(char *message, int num_bytes, fdInterface
 }
 
 void socketInterface::dispatchMessages(vector<messageType> in_messages, int client_idx){
-	for(int i = 0; i < in_messages.size(); i++)
+	for(unsigned int i = 0; i < in_messages.size(); i++)
 	{
 		if(in_messages[i].message_dest == DOWNSTREAM){
 			clients[client_idx]->dataFromUpstream(in_messages[i].buffer, in_messages[i].num_bytes, this);
@@ -154,7 +154,6 @@ vector<messageType> wsSocketInterpreter::parseDownstreamMessage(messageType in_m
 		//Parser
 		stringstream strstr(message_parser);
 		string temp_str, last_str;
-		int ii=0;
 		while(strstr >> temp_str){
 			//Process keys and values
 			if(last_str.compare("GET") == 0)
@@ -225,8 +224,8 @@ vector<messageType> wsSocketInterpreter::parseDownstreamMessage(messageType in_m
 	while(connection_established && message_parser.length() > 2){
 
 		//Start by extacting the payload length
-		int payload_len = message_parser[1] & 0x7F;
-		int message_start_idx = 6;
+		unsigned int payload_len = message_parser[1] & 0x7F;
+		unsigned int message_start_idx = 6;
 		if(payload_len == 126){
 			uint16_t len_temp;
 			memcpy(&len_temp, &message_parser[2], 2);
@@ -249,7 +248,7 @@ vector<messageType> wsSocketInterpreter::parseDownstreamMessage(messageType in_m
 
 		//We have to decode the message by XORing with the mask
 		int message_mask_idx = message_start_idx - 4;
-		for(int ii=0; ii < payload_len; ii++){
+		for(unsigned int ii=0; ii < payload_len; ii++){
 			message_parser[ii+message_start_idx] = message_parser[ii+message_start_idx] ^ message_parser[(ii%4)+message_mask_idx];
 		}
 
@@ -312,7 +311,7 @@ vector<messageType> wsSocketInterpreter::parseUpstreamMessage(messageType in_mes
 
 //This function just acts as a proxy in order to run POSIX threads through a member function
 static void *socketReaderProxy(void *in_socket_thread){
-	static_cast<socketThread*>(in_socket_thread)->socketReader();
+	return static_cast<socketThread*>(in_socket_thread)->socketReader();
 }
 
 socketThread::socketThread(int in_fp, fdInterface *in_sock, pthread_mutex_t *in_mutex, bool in_is_datagram_socket, struct sockaddr_in *in_addr){
@@ -336,8 +335,6 @@ socketThread::socketThread(int in_fp, fdInterface *in_sock, pthread_mutex_t *in_
 }
 
 void *socketThread::socketReader(){
-	struct sockaddr_in from;
-	socklen_t fromlen;
 	char buffer[256];
 
 	#ifdef DEBUG
@@ -368,6 +365,7 @@ void *socketThread::socketReader(){
 	#endif
 	close(socket_fp);
 	sock_int->deleteDownstreamInterface(this);
+	return NULL;
 }
 
 void socketThread::receivedData(char *message, int num_bytes){

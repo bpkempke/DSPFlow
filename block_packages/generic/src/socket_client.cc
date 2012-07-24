@@ -51,7 +51,7 @@ socket_client::~socket_client(){
 void socket_client::process(){
 	//TODO: Again I'm just copy-pasting this from file.cc...
 	//Just run through all the inputs sequentially and write them all out to file in that order...
-	for(int ii=0; ii < block_info.inputs.size(); ii++){
+	for(unsigned int ii=0; ii < block_info.inputs.size(); ii++){
 		primType cur_input_primtype = block_info.inputs[ii]->getPrimitiveType();
 		int num_elements = block_info.inputs[ii]->getPrimitiveUsage();
 		int n;
@@ -80,7 +80,7 @@ flowBlock *socket_client::replicate_block(){
 	return new socket_client(block_info);
 }
 
-void socket_client::background_thread(){
+void *socket_client::background_thread(){
 	running = true;
 	while(running){
 		//Read a random amount of data
@@ -91,5 +91,5 @@ void socket_client::background_thread(){
 		//Put it on the top output flowPipe (ignore the rest if there are any...)
 		block_info.outputs[0]->insertPrimitiveData(temp_read_data, n);
 	}
-
+	return NULL;
 }

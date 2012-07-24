@@ -56,7 +56,7 @@ socket_server::socket_server(flowBlockDescription in_desc): flowBlock(in_desc){
 	sock = new socketInterface(socket_type);
 
 	//Create a new socket to listen on
-	int socket_fd = newSocket(in_socket_port, sock, true);
+	newSocket(in_socket_port, sock, true);
 
 	sock_trans = new socketServerIntermediary(sock, this);
 
@@ -75,7 +75,7 @@ void socket_server::process(){
 	//This should send data out to all connected clients
 	//TODO: Just copied a lot of this out of file.cc... should probably go somewhere common to the two
 	//Just run through all the inputs sequentially and write them all out to file in that order...
-	for(int ii=0; ii < block_info.inputs.size(); ii++){
+	for(unsigned int ii=0; ii < block_info.inputs.size(); ii++){
 		primType cur_input_primtype = block_info.inputs[ii]->getPrimitiveType();
 		int num_elements = block_info.inputs[ii]->getPrimitiveUsage();
 		//TODO: All this casting is probably a little confusing and unnecessary
@@ -107,9 +107,10 @@ flowBlock *socket_server::replicate_block(){
 	//TODO: This is sort of a conundrum... what does one do with a socket_server if it's asked to replicate itself?
 	// Best option that I can think of would be to increment the address and make a new one...
 	// Or you could implement something at the application layer, but that gets messy
+	return NULL;
 }
 
-void socket_server::background_thread(){
+void *socket_server::background_thread(){
 	//This thread just waits for incoming connections and then pushes them on to the socketInterface instance!
 	// (mostly copied from the SDRPortal project (<sdrportal_repo>/src/uhd_daemon.cc)
 	struct sockaddr_in data_cli;
@@ -129,7 +130,7 @@ void socket_server::background_thread(){
 		//Launch all the threads necessary to keep track of this new socket connection
 		new socketThread(datasock_fd, sock, &uplink_lock, false);
 	}
-
+	return NULL;
 }
 
 //TODO: This is particularly inefficient, but don't really know how to 

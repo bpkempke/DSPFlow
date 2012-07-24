@@ -11,7 +11,7 @@
 
 //Proxy function to run a thread inside of a flowGraph member function
 static void *flowGraphThreadProxy(void *in_flowgraph){
-	static_cast<flowGraph*>(in_flowgraph)->thread_run();
+	return static_cast<flowGraph*>(in_flowgraph)->thread_run();
 }
 
 flowGraph::flowGraph(std::string graph_desc_xml){
@@ -166,7 +166,7 @@ void flowGraph::pipeHasData(flowPipe *in_pipe){
 
 void flowGraph::run(){
 	//TODO: What should this do?
-	int ret = pthread_create( &fg_thread, NULL, flowGraphThreadProxy, (void*) this);
+	pthread_create( &fg_thread, NULL, flowGraphThreadProxy, (void*) this);
 	running = true;
 }
 
@@ -176,7 +176,7 @@ void flowGraph::stop(){
 }
 
 //This method performs all of the actual scheduling of computation, etc.
-void flowGraph::thread_run(){
+void *flowGraph::thread_run(){
 	while(running){
 		//Start by running all of the blocks which are ready to go
 		while(ready_blocks.size()){
@@ -196,5 +196,6 @@ void flowGraph::thread_run(){
 
 		//TODO: Maybe we should sleep here sometimes???
 	}
+	return NULL;
 }
 
