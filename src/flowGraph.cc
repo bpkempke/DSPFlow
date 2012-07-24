@@ -34,17 +34,31 @@ flowGraph::flowGraph(std::string graph_desc_xml){
 		tinyxml2::XMLElement *function_element = block_element->FirstChildElement("function");
 		newblock_description.function = function_element->FirstChild()->Value();
 
+		//Get all the key/value pairs
+		tinyxml2::XMLElement *input_element;
+		for(input_element = block_element->FirstChildElement("arg"); input_element != NULL; input_element = (tinyxml2::XMLElement*)input_element->NextSiblingElement("arg")){
+			//Extract the key and value based on '=' delimiter
+			std::string cur_arg = input_element->FirstChild()->Value();
+			std::string cur_key, cur_value;
+			std::stringstream sstream(cur_arg);
+			getline(sstream, cur_key, '=');
+			getline(sstream, cur_value);
+
+			printf("Key: %s\nValue: %s\n",cur_key.c_str(), cur_value.c_str());
+			newblock_description.key_value[cur_key] = cur_value;
+		}
+
 		//Create a new flowBlock element
 		flowBlock *new_block = addBlock(newblock_description);
+		printf("Created a block...\n");
 		
-		tinyxml2::XMLElement *input_element;
-		for(input_element = block_element->FirstChildElement("input"); input_element != NULL; input_element = (tinyxml2::XMLElement*)input_element->NextSibling()){
+		for(input_element = block_element->FirstChildElement("input"); input_element != NULL; input_element = (tinyxml2::XMLElement*)input_element->NextSiblingElement("input")){
 			//TODO: Does ToText() do what we want it to do here?
 			flowPipe *from_pipe = pipes[input_element->FirstChild()->Value()];
 			from_pipe->setOutputBlock(new_block);
 		}
 		tinyxml2::XMLElement *output_element;
-		for(output_element = block_element->FirstChildElement("output"); output_element != NULL; output_element = (tinyxml2::XMLElement*)output_element->NextSibling()){
+		for(output_element = block_element->FirstChildElement("output"); output_element != NULL; output_element = (tinyxml2::XMLElement*)output_element->NextSiblingElement("output")){
 			//We need to first determine if this is a complex pipe, or just a plain primitive pipe
 			tinyxml2::XMLElement *type_element = output_element->FirstChildElement("primitive_type");
 			std::string prim_type_str = type_element->FirstChild()->Value();

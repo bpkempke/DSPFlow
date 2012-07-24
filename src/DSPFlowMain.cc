@@ -12,6 +12,7 @@ int main(){
 		"<block>" //This is the file input block
 		"<id>file_input_block</id>"
 		"<function>generic/file</function>"
+		"<arg>file_name=input_file.dat</arg>"
 		"<output>out</output>"
 		"</block>"
 		"<block>" //This is the addition block

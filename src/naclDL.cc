@@ -31,7 +31,6 @@ void *naclDL::getLibrary(std::string library){
 		//TODO: Put in some more error checking here!!!
 		void *handle = dlopen(filename.c_str(), RTLD_NOW);
 		open_libraries[library] = handle;
-		printf("dlerror(): %s\n", dlerror());
 		return handle;
 	} else {
 		//Library found, just give back the pointer

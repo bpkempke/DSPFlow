@@ -3,6 +3,9 @@ flowBlock.cc
 flowGraph.cc
 flowPipe.cc
 naclDL.cc
+socketInterface.cc
+sha1.cc
+base64.cc
 tinyxml2.cpp)
 
 add_executable(DSPFlowBin DSPFlowMain.cc)
