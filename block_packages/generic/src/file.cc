@@ -1,5 +1,6 @@
 #include <file.h>
 #include <cstdlib>
+#include <pthread.h>
 
 file::file(flowBlockDescription in_desc) : flowBlock(in_desc){
 	file_ptr = NULL;
