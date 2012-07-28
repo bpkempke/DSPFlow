@@ -1,6 +1,7 @@
 #include <flowPipe.h>
 #include <string.h>
 #include <flowGraph.h>
+#include <stdio.h>
 
 /*************************************
   * flowPipeContainer

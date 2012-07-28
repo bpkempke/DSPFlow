@@ -66,10 +66,11 @@ void *file::background_thread(){
 	running = true;
 	while(running){
 		//Read a random amount of data
-		fread(temp_read_data, 1, FILE_READ_SIZE, file_ptr);
+		int n = fread(temp_read_data, 1, FILE_READ_SIZE, file_ptr);
+		if(n != FILE_READ_SIZE) running = false;
 
 		//Put it on the top output flowPipe (ignore the rest if there are any...)
-		block_info.outputs[0]->insertPrimitiveData(temp_read_data, FILE_READ_SIZE);
+		block_info.outputs[0]->insertPrimitiveData(temp_read_data, n);
 #ifdef __APPLE__
 		pthread_yield_np(); //TODO: is this good enough for Mac???
 #else

@@ -1,4 +1,5 @@
 #include <flowBlock.h>
+#include <stdio.h>
 
 //flowBlock constructor:
 flowBlock::flowBlock(flowBlockDescription in_description){

@@ -73,7 +73,7 @@ flowGraph::flowGraph(std::string graph_desc_xml){
 				primitive_type = PRIM_DOUBLE;
 
 			//Create a new pipe, the other end of which will be determined at a later time
-			flowPipe *new_pipe = new flowPipe(primitive_type);
+			flowPipe *new_pipe = addPipe(primitive_type);
 			pipes[output_element->FirstChild()->Value()] = new_pipe;
 
 			//Also add it to the vector of pipes so that we can keep track of it for destruction
@@ -106,10 +106,10 @@ flowGraph::flowGraph(std::string graph_desc_xml){
 
 		//Lastly, go through all the input and output pipe arrays and connect everything together
 		for(unsigned int jj=0; jj < block_descriptions[ii].outputs.size(); jj++){
-			block_descriptions[jj].outputs[jj]->setInputBlock(new_block);
+			block_descriptions[ii].outputs[jj]->setInputBlock(new_block);
 		}
 		for(unsigned int jj=0; jj < block_descriptions[ii].inputs.size(); jj++){
-			block_descriptions[jj].inputs[jj]->setOutputBlock(new_block);
+			block_descriptions[ii].inputs[jj]->setOutputBlock(new_block);
 		}
 		flowgraph_blocks.push_back(new_block);
 	}
@@ -139,13 +139,13 @@ flowBlock *flowGraph::addBlock(flowBlockDescription in_desc){
 	return new_block;
 }
 
-void flowGraph::addPipe(flowBlock *source_block, primType primitive_type){
+flowPipe *flowGraph::addPipe(primType primitive_type){
 	//Create the new pipe and add it onto the list...
 	flowPipe *new_pipe = new flowPipe(primitive_type);
+	new_pipe->setTopGraph(this);
 	flowgraph_pipes.push_back(new_pipe);
 
-	//Make sure the source block has a reference to the new pipe
-	source_block->addOutputPipe(new_pipe);
+	return new_pipe;
 }
 
 void flowGraph::connectPipe(flowBlock *dest_block, flowPipe *in_pipe, std::string source_id){

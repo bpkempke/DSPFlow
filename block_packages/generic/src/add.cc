@@ -1,6 +1,7 @@
 #include<add.h>
 #include <string.h>
 #include<cstdlib>
+#include <stdio.h>
 
 add::add(flowBlockDescription in_desc) : flowBlock(in_desc){
 	input_prim_type = getInputPrimitiveType();
@@ -28,6 +29,7 @@ add::~add(){
 void add::process(){
 	//First figure out how much data is ready to add together
 	int num_input_elements = getMinInputPipeUsage();
+	printf("num_input_elements = %d\n",num_input_elements);
 
 	//For now, just do a dumb addition based on the primitive type of the input pipes
 	(*this.*add_fptr)(num_input_elements);
@@ -49,12 +51,13 @@ void add::add_int8(int num_elements){
 	memcpy(added_data_ptr, block_info.inputs[0]->consumePrimitiveData(num_elements), num_elements);
 
 	//Now add stuff together into the scratchspace
-	for(unsigned int ii=0; ii < block_info.inputs.size(); ii++){
+	for(unsigned int ii=1; ii < block_info.inputs.size(); ii++){
 		char *current_input_buffer = (char*)block_info.inputs[ii]->consumePrimitiveData(num_elements);
 		for(int jj=0; jj < num_elements; jj++){
 			added_data_ptr[jj] += current_input_buffer[jj];
 		}
 	}
+	block_info.outputs[0]->insertPrimitiveData(added_data_ptr, num_elements*sizeof(int8_t));
 }
 
 void add::add_int32(int num_elements){
@@ -71,12 +74,13 @@ void add::add_int32(int num_elements){
 	memcpy(added_data_ptr, block_info.inputs[0]->consumePrimitiveData(num_elements), num_elements*4);
 
 	//Now add stuff together into the scratchspace
-	for(unsigned int ii=0; ii < block_info.inputs.size(); ii++){
+	for(unsigned int ii=1; ii < block_info.inputs.size(); ii++){
 		int32_t *current_input_buffer = (int32_t*)block_info.inputs[ii]->consumePrimitiveData(num_elements);
 		for(int jj=0; jj < num_elements; jj++){
 			added_data_ptr[jj] += current_input_buffer[jj];
 		}
 	}
+	block_info.outputs[0]->insertPrimitiveData(added_data_ptr, num_elements*sizeof(int32_t));
 }
 
 void add::add_float(int num_elements){
@@ -93,12 +97,13 @@ void add::add_float(int num_elements){
 	memcpy(added_data, block_info.inputs[0]->consumePrimitiveData(num_elements), num_elements*4);
 
 	//Now add stuff together into the scratchspace
-	for(unsigned int ii=0; ii < block_info.inputs.size(); ii++){
+	for(unsigned int ii=1; ii < block_info.inputs.size(); ii++){
 		float *current_input_buffer = (float*)block_info.inputs[ii]->consumePrimitiveData(num_elements);
 		for(int jj=0; jj < num_elements; jj++){
 			added_data_ptr[jj] += current_input_buffer[jj];
 		}
 	}
+	block_info.outputs[0]->insertPrimitiveData(added_data_ptr, num_elements*sizeof(float));
 }
 
 void add::add_double(int num_elements){
@@ -115,10 +120,11 @@ void add::add_double(int num_elements){
 	memcpy(added_data_ptr, block_info.inputs[0]->consumePrimitiveData(num_elements), num_elements*8);
 
 	//Now add stuff together into the scratchspace
-	for(unsigned int ii=0; ii < block_info.inputs.size(); ii++){
+	for(unsigned int ii=1; ii < block_info.inputs.size(); ii++){
 		double *current_input_buffer = (double*)block_info.inputs[ii]->consumePrimitiveData(num_elements);
 		for(int jj=0; jj < num_elements; jj++){
 			added_data_ptr[jj] += current_input_buffer[jj];
 		}
 	}
+	block_info.outputs[0]->insertPrimitiveData(added_data_ptr, num_elements*sizeof(double));
 }

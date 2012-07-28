@@ -9,7 +9,7 @@ class flowGraph{
 public:
 	flowGraph(std::string graph_desc_xml);
 	flowBlock *addBlock(flowBlockDescription in_desc);
-	void addPipe(flowBlock *source_block, primType primitive_type);
+	flowPipe *addPipe(primType primitive_type);
 	void connectPipe(flowBlock *dest_bock, flowPipe *in_pipe, std::string source_id);
 	void removeBlock(std::string id);
 	void sendMessage(std::string id, std::string message);

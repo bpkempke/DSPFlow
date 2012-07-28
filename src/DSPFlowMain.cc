@@ -13,18 +13,19 @@ int main(){
 		"<id>file_input_block</id>"
 		"<function>generic/file</function>"
 		"<arg>file_name=input_file.dat</arg>"
-		"<output prim_type=\"int8\">out</output>"
+		"<output prim_type=\"int8\">file_input_out</output>"
 		"</block>"
 		"<block>" //This is the addition block
 		"<id>add_block</id>"
 		"<function>generic/add</function>"
-		"<input>cool_block.out</input>"
-		"<output prim_type=\"int8\">out</output>"
+		"<input>file_input_out</input>"
+		"<output prim_type=\"int8\">add_out</output>"
 		"</block>"
 		"<block>" //This is the file output block
 		"<id>file_output_block</id>"
 		"<function>generic/file</function>"
-		"<input>add_block.out</input>"
+		"<arg>file_name=output_file.dat</arg>"
+		"<input>add_out</input>"
 		"</block>"
 		"</flowgraph>"
 	;
@@ -34,6 +35,7 @@ int main(){
 	flowGraph main_flowgraph(xml_desc);
 	printf("Running the flowGraph...\n");
 	main_flowgraph.run();
+	usleep(1000000);
 	printf("flowGraph complete...\n");
 
 	//What to do here? Wait for thread closure or will it block in main_flowgraph.run()?
