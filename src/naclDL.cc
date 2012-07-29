@@ -31,6 +31,7 @@ void *naclDL::getLibrary(std::string library){
 		//TODO: This is a bit of a kludge for now.... figure out how to make this better....
 		//TODO: Put in some more error checking here!!!
 		void *handle = dlopen(filename.c_str(), RTLD_NOW);
+		printf("dlopen error:%s\n",dlerror());
 		open_libraries[library] = handle;
 		return handle;
 	} else {

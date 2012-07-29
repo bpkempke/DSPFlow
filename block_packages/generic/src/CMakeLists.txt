@@ -6,6 +6,7 @@ file.cc
 mult.cc
 socket_client.cc
 socket_server.cc
+templateArithmetic.cc
 )
 
 target_link_libraries(DSPFlow_generic
