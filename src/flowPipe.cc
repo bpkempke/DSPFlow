@@ -26,10 +26,18 @@ flowPipe::flowPipe(primType primitive_type){
 //Push data into the pipe!
 void flowPipe::insertPrimitiveData(void *in_data, int num_bytes){
 	//Check to see if there's too much data in here
+	//TODO: This will break if num_bytes > primitive_max_capacity*2
 	if(primitive_current_usage + num_bytes > primitive_max_capacity){
-		delete primitive_data;
-		primitive_max_capacity *= 2;
+		char *temp_storage = primitive_data;
+		int min_new_size = (primitive_current_usage + num_bytes);
+		int cand_size = primitive_max_capacity*2;
+		if(cand_size > min_new_size)
+			primitive_max_capacity = cand_size;
+		else
+			primitive_max_capacity = min_new_size;
 		primitive_data = new char[primitive_max_capacity];
+		memcpy(primitive_data, temp_storage, primitive_current_usage);
+		delete temp_storage;
 	}
 
 	//Copy in the data
@@ -45,6 +53,12 @@ void flowPipe::insertPrimitiveData(void *in_data, int num_bytes){
 void *flowPipe::consumePrimitiveData(int num_bytes){
 	void *return_pointer = primitive_data;
 	
+	printf("consuming: \n");
+	for(int ii=0; ii < num_bytes; ii++){
+		printf("%02X", (unsigned char)primitive_data[ii]);
+	//	sleep(100);
+	}
+	printf("\n");
 	primitive_current_usage -= num_bytes;
 	if(primitive_current_usage < 0) primitive_current_usage = 0; 
 

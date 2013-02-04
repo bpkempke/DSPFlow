@@ -201,11 +201,13 @@ void flowGraph::run(){
 void flowGraph::stop(){
 	running = false;
 	pthread_join(fg_thread, NULL);
+	//TODO: Does this actually call the destructors of all the flowBlocks??
 }
 
 //This method performs all of the actual scheduling of computation, etc.
 void *flowGraph::thread_run(){
 	while(running){
+//		printf("running within the flowGraph thread...\n");
 		//Start by running all of the blocks which are ready to go
 		while(ready_blocks.size()){
 			flowBlock *cur_ready_block = ready_blocks.back();

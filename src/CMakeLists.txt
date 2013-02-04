@@ -1,4 +1,4 @@
-add_library(DSPLib
+add_library(DSPLib SHARED
 flowBlock.cc
 flowGraph.cc
 flowPipe.cc

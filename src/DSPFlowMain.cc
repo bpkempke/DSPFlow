@@ -37,6 +37,7 @@ int main(){
 	main_flowgraph.run();
 	usleep(1000000);
 	printf("flowGraph complete...\n");
+	main_flowgraph.stop();
 
 	//What to do here? Wait for thread closure or will it block in main_flowgraph.run()?
 	return 0;
