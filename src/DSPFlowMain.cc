@@ -15,10 +15,17 @@ int main(){
 		"<arg>file_name=input_file.dat</arg>"
 		"<output prim_type=\"int8\">file_input_out</output>"
 		"</block>"
+		"<block>" //This is a constant block which specifies how much to add to each byte
+		"<id>constant_block</id>"
+		"<function>generic/constant</function>"
+		"<arg>value=1</arg>"
+		"<output prim_type=\"int8\">constant_out</output>"
+		"</block>"
 		"<block>" //This is the addition block
 		"<id>add_block</id>"
 		"<function>generic/add</function>"
 		"<input>file_input_out</input>"
+		"<input>constant_out</input>"
 		"<output prim_type=\"int8\">add_out</output>"
 		"</block>"
 		"<block>" //This is the file output block
